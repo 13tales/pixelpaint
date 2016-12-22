@@ -10561,6 +10561,34 @@ var _user$project$Tree$cullTree = function (t) {
 		}
 	}
 };
+var _user$project$Types$Model = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {columns: a, rows: b, canvas: c, selectedClr: d, drag: e, history: f, historyIndex: g, window: h, mouseOverUI: i};
+	});
+var _user$project$Types$Drag = F2(
+	function (a, b) {
+		return {start: a, current: b};
+	});
+var _user$project$Types$LeaveUI = {ctor: 'LeaveUI'};
+var _user$project$Types$EnterUI = {ctor: 'EnterUI'};
+var _user$project$Types$Redo = {ctor: 'Redo'};
+var _user$project$Types$Undo = {ctor: 'Undo'};
+var _user$project$Types$ColorSelection = function (a) {
+	return {ctor: 'ColorSelection', _0: a};
+};
+var _user$project$Types$DragEnd = function (a) {
+	return {ctor: 'DragEnd', _0: a};
+};
+var _user$project$Types$DragAt = function (a) {
+	return {ctor: 'DragAt', _0: a};
+};
+var _user$project$Types$DragStart = function (a) {
+	return {ctor: 'DragStart', _0: a};
+};
+var _user$project$Types$Right = {ctor: 'Right'};
+var _user$project$Types$Bottom = {ctor: 'Bottom'};
+var _user$project$Types$Left = {ctor: 'Left'};
+var _user$project$Types$Top = {ctor: 'Top'};
 var _user$project$PicoPalette$svgPalette = function () {
 	var colorList = {
 		ctor: '::',
@@ -10634,6 +10662,370 @@ var _user$project$PicoPalette$clr = function (color) {
 	var key = _elm_lang$core$Basics$toString(color);
 	return A2(_elm_lang$core$Maybe$withDefault, '#FFFFFF', value);
 };
+var _user$project$PickerUI$colourSwatch = F2(
+	function (swatchClr, model) {
+		var border = _elm_lang$core$Native_Utils.eq(model.selectedClr, swatchClr) ? {ctor: '_Tuple2', _0: 'border', _1: '0.2em solid white'} : {ctor: '_Tuple2', _0: 'border', _1: '0.1em solid white'};
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {
+							ctor: '_Tuple2',
+							_0: 'background-color',
+							_1: _user$project$PicoPalette$clr(swatchClr)
+						},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'height', _1: '3em'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'width', _1: '3em'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '50%'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'border-color', _1: 'white'},
+											_1: {
+												ctor: '::',
+												_0: border,
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'margin', _1: '.3em'},
+													_1: {ctor: '[]'}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onClick(
+						_user$project$Types$ColorSelection(swatchClr)),
+					_1: {ctor: '[]'}
+				}
+			},
+			{ctor: '[]'});
+	});
+var _user$project$PickerUI$swatches = A2(
+	_elm_lang$core$List$map,
+	_user$project$PickerUI$colourSwatch,
+	A2(_elm_lang$core$List$range, 1, 16));
+var _user$project$PickerUI$iconBtn = F4(
+	function (element, isActive, msg, model) {
+		var btnColour = _elm_lang$core$Native_Utils.eq(isActive, true) ? _elm_lang$core$Color$white : _elm_lang$core$Color$darkCharcoal;
+		return A2(
+			_elm_lang$html$Html$span,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'margin', _1: '.5ex'},
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onClick(msg),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: A2(element, btnColour, 52),
+				_1: {ctor: '[]'}
+			});
+	});
+var _user$project$PickerUI$reverseMap = F2(
+	function (fList, arg) {
+		var inner = F3(
+			function (f, a, r) {
+				inner:
+				while (true) {
+					var _p0 = f;
+					if (_p0.ctor === '[]') {
+						return r;
+					} else {
+						var _v1 = _p0._1,
+							_v2 = a,
+							_v3 = A2(
+							_elm_lang$core$List$append,
+							r,
+							{
+								ctor: '::',
+								_0: _p0._0(a),
+								_1: {ctor: '[]'}
+							});
+						f = _v1;
+						a = _v2;
+						r = _v3;
+						continue inner;
+					}
+				}
+			});
+		return A3(
+			inner,
+			fList,
+			arg,
+			{ctor: '[]'});
+	});
+var _user$project$PickerUI$buildUI = F3(
+	function (model, controls, position) {
+		var posAttributes = function () {
+			var _p1 = position;
+			switch (_p1.ctor) {
+				case 'Top':
+					return {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'top', _1: '2em'},
+						_1: {ctor: '[]'}
+					};
+				case 'Left':
+					return {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'left', _1: '2em'},
+						_1: {ctor: '[]'}
+					};
+				case 'Bottom':
+					return {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'bottom', _1: '2em'},
+						_1: {ctor: '[]'}
+					};
+				default:
+					return {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'right', _1: '2em'},
+						_1: {ctor: '[]'}
+					};
+			}
+		}();
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'position', _1: 'fixed'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'align-items', _1: 'center'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'bottom', _1: '1em'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'height', _1: 'auto'},
+											_1: {
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								}
+							}
+						}
+					}),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$style(
+							{
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'flex-wrap', _1: 'wrap'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'border', _1: '0.1em solid white'},
+											_1: {
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '2em'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'padding', _1: '1ex'},
+													_1: {ctor: '[]'}
+												}
+											}
+										}
+									}
+								}
+							}),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Events$onMouseEnter(_user$project$Types$EnterUI),
+							_1: {ctor: '[]'}
+						}
+					},
+					A2(_user$project$PickerUI$reverseMap, controls, model)),
+				_1: {ctor: '[]'}
+			});
+	});
+var _user$project$View$renderLeaf = function (v) {
+	return A2(
+		_elm_lang$svg$Svg$rect,
+		{
+			ctor: '::',
+			_0: _elm_lang$svg$Svg_Attributes$x(
+				_elm_lang$core$Basics$toString(v.boundingBox.pos.x)),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$y(
+					_elm_lang$core$Basics$toString(v.boundingBox.pos.y)),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$width(
+						_elm_lang$core$Basics$toString(v.boundingBox.size.width)),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$height(
+							_elm_lang$core$Basics$toString(v.boundingBox.size.height)),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$stroke('white'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$fill(
+									_user$project$PicoPalette$clr(v.val)),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		},
+		{ctor: '[]'});
+};
+var _user$project$View$renderTree = function (t) {
+	var _p0 = t;
+	if (_p0.ctor === 'Leaf') {
+		return _user$project$View$renderLeaf(_p0._0);
+	} else {
+		return A2(
+			_elm_lang$svg$Svg_Lazy$lazy,
+			_elm_lang$svg$Svg$g(
+				{ctor: '[]'}),
+			A2(
+				_elm_lang$core$List$map,
+				_user$project$View$renderTree,
+				{
+					ctor: '::',
+					_0: _p0._1,
+					_1: {
+						ctor: '::',
+						_0: _p0._2,
+						_1: {
+							ctor: '::',
+							_0: _p0._3,
+							_1: {
+								ctor: '::',
+								_0: _p0._4,
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}));
+	}
+};
+var _user$project$View$view = function (model) {
+	var canRedo = _elm_lang$core$Native_Utils.cmp(model.historyIndex, 0) > 0;
+	var canUndo = _elm_lang$core$Native_Utils.cmp(
+		_elm_lang$core$Array$length(model.history) - (model.historyIndex + 1),
+		0) > 0;
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$svg$Svg$svg,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$width('1280'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$height('1280'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$viewBox('0 0 1280 1280'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onMouseEnter(_user$project$Types$LeaveUI),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				},
+				{
+					ctor: '::',
+					_0: _user$project$View$renderTree(model.canvas),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A3(
+					_user$project$PickerUI$buildUI,
+					model,
+					A2(
+						_elm_lang$core$List$append,
+						_user$project$PickerUI$swatches,
+						{
+							ctor: '::',
+							_0: A3(_user$project$PickerUI$iconBtn, _jystic$elm_font_awesome$FontAwesome$undo, canUndo, _user$project$Types$Undo),
+							_1: {
+								ctor: '::',
+								_0: A3(_user$project$PickerUI$iconBtn, _jystic$elm_font_awesome$FontAwesome$repeat, canRedo, _user$project$Types$Redo),
+								_1: {ctor: '[]'}
+							}
+						}),
+					_user$project$Types$Bottom),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _user$project$Main$subscriptions = function (model) {
+	var _p0 = model.drag;
+	if (_p0.ctor === 'Nothing') {
+		return (!model.mouseOverUI) ? _elm_lang$mouse$Mouse$downs(_user$project$Types$DragStart) : _elm_lang$core$Platform_Sub$none;
+	} else {
+		return _elm_lang$core$Platform_Sub$batch(
+			{
+				ctor: '::',
+				_0: _elm_lang$mouse$Mouse$moves(_user$project$Types$DragAt),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$mouse$Mouse$ups(_user$project$Types$DragEnd),
+					_1: {ctor: '[]'}
+				}
+			});
+	}
+};
 var _user$project$Main$pointInRegion = F2(
 	function (cursorPos, region) {
 		return (_elm_lang$core$Native_Utils.cmp(cursorPos.x, region.pos.x) > -1) && ((_elm_lang$core$Native_Utils.cmp(cursorPos.x, region.pos.x + region.size.width) < 1) && ((_elm_lang$core$Native_Utils.cmp(cursorPos.y, region.pos.y) > -1) && (_elm_lang$core$Native_Utils.cmp(cursorPos.y, region.pos.y + region.size.height) < 1)));
@@ -10656,68 +11048,6 @@ var _user$project$Main$tileAtCursor = F2(
 			_1: _elm_lang$core$Basics$truncate((y / height) * rows)
 		};
 	});
-var _user$project$Main$renderLeaf = function (v) {
-	return A2(
-		_elm_lang$svg$Svg$rect,
-		{
-			ctor: '::',
-			_0: _elm_lang$svg$Svg_Attributes$x(
-				_elm_lang$core$Basics$toString(v.boundingBox.pos.x)),
-			_1: {
-				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$y(
-					_elm_lang$core$Basics$toString(v.boundingBox.pos.y)),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$width(
-						_elm_lang$core$Basics$toString(v.boundingBox.size.width)),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$height(
-							_elm_lang$core$Basics$toString(v.boundingBox.size.height)),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$fill(
-								_user$project$PicoPalette$clr(v.val)),
-							_1: {ctor: '[]'}
-						}
-					}
-				}
-			}
-		},
-		{ctor: '[]'});
-};
-var _user$project$Main$renderTree = function (t) {
-	var _p0 = t;
-	if (_p0.ctor === 'Leaf') {
-		return _user$project$Main$renderLeaf(_p0._0);
-	} else {
-		return A2(
-			_elm_lang$svg$Svg_Lazy$lazy,
-			_elm_lang$svg$Svg$g(
-				{ctor: '[]'}),
-			A2(
-				_elm_lang$core$List$map,
-				_user$project$Main$renderTree,
-				{
-					ctor: '::',
-					_0: _p0._1,
-					_1: {
-						ctor: '::',
-						_0: _p0._2,
-						_1: {
-							ctor: '::',
-							_0: _p0._3,
-							_1: {
-								ctor: '::',
-								_0: _p0._4,
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				}));
-	}
-};
 var _user$project$Main$historyHelper = F2(
 	function (model, step) {
 		var newIndex = model.historyIndex + step;
@@ -10845,72 +11175,25 @@ var _user$project$Main$addTile = F2(
 			{ctor: '_Tuple2', _0: point, _1: model.selectedClr},
 			model.canvas);
 	});
-var _user$project$Main$newPixelHelper = F2(
-	function (model, pos) {
-		var _p11 = {ctor: '_Tuple2', _0: (model.window.width / model.columns) | 0, _1: (model.window.height / model.rows) | 0};
-		var tileWidth = _p11._0;
-		var tileHeight = _p11._1;
-		var _p12 = A2(_user$project$Main$tileAtCursor, pos, model);
-		var col = _p12._0;
-		var row = _p12._1;
-		return A2(
-			_user$project$Tree$setBounds,
-			A4(_user$project$Tree$newBox, pos.x, pos.y, tileWidth, tileHeight),
-			model.selectedClr);
-	});
-var _user$project$Main$init = function () {
-	var startingCanvas = _user$project$Tree$Leaf(
-		{
-			boundingBox: {
-				pos: {x: 0, y: 0},
-				size: {width: 1280, height: 1280}
-			},
-			val: 1
-		});
-	return {
-		columns: 128,
-		rows: 128,
-		canvas: startingCanvas,
-		selectedClr: 9,
-		drag: _elm_lang$core$Maybe$Nothing,
-		history: _elm_lang$core$Array$fromList(
-			{
-				ctor: '::',
-				_0: startingCanvas,
-				_1: {ctor: '[]'}
-			}),
-		historyIndex: 0,
-		window: {height: 1280, width: 1280},
-		mouseOverUI: false
-	};
-}();
-var _user$project$Main$Model = F9(
-	function (a, b, c, d, e, f, g, h, i) {
-		return {columns: a, rows: b, canvas: c, selectedClr: d, drag: e, history: f, historyIndex: g, window: h, mouseOverUI: i};
-	});
-var _user$project$Main$Drag = F2(
-	function (a, b) {
-		return {start: a, current: b};
-	});
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p13 = msg;
-		switch (_p13.ctor) {
+		var _p11 = msg;
+		switch (_p11.ctor) {
 			case 'DragStart':
-				var _p14 = _p13._0;
+				var _p12 = _p11._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
 							drag: _elm_lang$core$Maybe$Just(
-								A2(_user$project$Main$Drag, _p14, _p14)),
-							canvas: A2(_user$project$Main$addTile, model, _p14)
+								A2(_user$project$Types$Drag, _p12, _p12)),
+							canvas: A2(_user$project$Main$addTile, model, _p12)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DragAt':
-				var _p17 = _p13._0;
+				var _p15 = _p11._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10918,12 +11201,12 @@ var _user$project$Main$update = F2(
 						{
 							drag: A2(
 								_elm_lang$core$Maybe$map,
-								function (_p15) {
-									var _p16 = _p15;
-									return A2(_user$project$Main$Drag, _p16.start, _p17);
+								function (_p13) {
+									var _p14 = _p13;
+									return A2(_user$project$Types$Drag, _p14.start, _p15);
 								},
 								model.drag),
-							canvas: A2(_user$project$Main$addTile, model, _p17)
+							canvas: A2(_user$project$Main$addTile, model, _p15)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -10938,7 +11221,7 @@ var _user$project$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{selectedClr: _p13._0}),
+						{selectedClr: _p11._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Undo':
@@ -10971,275 +11254,37 @@ var _user$project$Main$update = F2(
 				};
 		}
 	});
-var _user$project$Main$LeaveUI = {ctor: 'LeaveUI'};
-var _user$project$Main$EnterUI = {ctor: 'EnterUI'};
-var _user$project$Main$Redo = {ctor: 'Redo'};
-var _user$project$Main$redoBtn = function (model) {
-	var redoColour = (_elm_lang$core$Native_Utils.cmp(model.historyIndex, 0) > 0) ? _elm_lang$core$Color$white : _elm_lang$core$Color$darkCharcoal;
-	return A2(
-		_elm_lang$html$Html$span,
+var _user$project$Main$init = function () {
+	var startingCanvas = _user$project$Tree$Leaf(
 		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$style(
-				{
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'margin-left', _1: '.5ex'},
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: _elm_lang$svg$Svg_Events$onClick(_user$project$Main$Redo),
-				_1: {ctor: '[]'}
-			}
-		},
-		{
-			ctor: '::',
-			_0: A2(_jystic$elm_font_awesome$FontAwesome$repeat, redoColour, 42),
-			_1: {ctor: '[]'}
-		});
-};
-var _user$project$Main$Undo = {ctor: 'Undo'};
-var _user$project$Main$undoBtn = function (model) {
-	var undoColour = (_elm_lang$core$Native_Utils.cmp(
-		_elm_lang$core$Array$length(model.history) - (model.historyIndex + 1),
-		0) > 0) ? _elm_lang$core$Color$white : _elm_lang$core$Color$darkCharcoal;
-	return A2(
-		_elm_lang$html$Html$span,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$style(
-				{
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'margin-right', _1: '.5ex'},
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: _elm_lang$svg$Svg_Events$onClick(_user$project$Main$Undo),
-				_1: {ctor: '[]'}
-			}
-		},
-		{
-			ctor: '::',
-			_0: A2(_jystic$elm_font_awesome$FontAwesome$undo, undoColour, 42),
-			_1: {ctor: '[]'}
-		});
-};
-var _user$project$Main$ColorSelection = function (a) {
-	return {ctor: 'ColorSelection', _0: a};
-};
-var _user$project$Main$swatch = F2(
-	function (selectedClr, swatchClr) {
-		var border = _elm_lang$core$Native_Utils.eq(selectedClr, swatchClr) ? {ctor: '_Tuple2', _0: 'border', _1: '0.2em solid white'} : {ctor: '_Tuple2', _0: 'border', _1: '0.1em solid white'};
-		return A2(
-			_elm_lang$html$Html$div,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'background-color',
-							_1: _user$project$PicoPalette$clr(swatchClr)
-						},
-						_1: {
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'height', _1: '3em'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'width', _1: '3em'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '50%'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border-color', _1: 'white'},
-											_1: {
-												ctor: '::',
-												_0: border,
-												_1: {
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'margin', _1: '.3em'},
-													_1: {ctor: '[]'}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Events$onClick(
-						_user$project$Main$ColorSelection(swatchClr)),
-					_1: {ctor: '[]'}
-				}
+			boundingBox: {
+				pos: {x: 0, y: 0},
+				size: {width: 1280, height: 1280}
 			},
-			{ctor: '[]'});
-	});
-var _user$project$Main$picker = function (model) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$style(
-				{
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-					_1: {
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'position', _1: 'fixed'},
-						_1: {
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'bottom', _1: '2em'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'border', _1: '0.1em solid white'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '2em'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'padding', _1: '1ex'},
-											_1: {ctor: '[]'}
-										}
-									}
-								}
-							}
-						}
-					}
-				}),
-			_1: {
-				ctor: '::',
-				_0: _elm_lang$html$Html_Events$onMouseEnter(_user$project$Main$EnterUI),
-				_1: {ctor: '[]'}
-			}
-		},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$div,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				},
-				A2(
-					_elm_lang$core$List$map,
-					_user$project$Main$swatch(model.selectedClr),
-					A2(_elm_lang$core$List$range, 1, 16))),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$div,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$style(
-							{
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'padding', _1: '1ex'},
-									_1: {ctor: '[]'}
-								}
-							}),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _user$project$Main$undoBtn(model),
-						_1: {
-							ctor: '::',
-							_0: _user$project$Main$redoBtn(model),
-							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {ctor: '[]'}
-			}
+			val: 1
 		});
-};
-var _user$project$Main$view = function (model) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$svg$Svg$svg,
-				{
-					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$width('1280'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$height('1280'),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$viewBox('0 0 1280 1280'),
-							_1: {
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onMouseEnter(_user$project$Main$LeaveUI),
-								_1: {ctor: '[]'}
-							}
-						}
-					}
-				},
-				{
-					ctor: '::',
-					_0: _user$project$Main$renderTree(model.canvas),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: _user$project$Main$picker(model),
-				_1: {ctor: '[]'}
-			}
-		});
-};
-var _user$project$Main$DragEnd = function (a) {
-	return {ctor: 'DragEnd', _0: a};
-};
-var _user$project$Main$DragAt = function (a) {
-	return {ctor: 'DragAt', _0: a};
-};
-var _user$project$Main$DragStart = function (a) {
-	return {ctor: 'DragStart', _0: a};
-};
-var _user$project$Main$subscriptions = function (model) {
-	var _p18 = model.drag;
-	if (_p18.ctor === 'Nothing') {
-		return (!model.mouseOverUI) ? _elm_lang$mouse$Mouse$downs(_user$project$Main$DragStart) : _elm_lang$core$Platform_Sub$none;
-	} else {
-		return _elm_lang$core$Platform_Sub$batch(
+	return {
+		columns: 128,
+		rows: 128,
+		canvas: startingCanvas,
+		selectedClr: 9,
+		drag: _elm_lang$core$Maybe$Nothing,
+		history: _elm_lang$core$Array$fromList(
 			{
 				ctor: '::',
-				_0: _elm_lang$mouse$Mouse$moves(_user$project$Main$DragAt),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$mouse$Mouse$ups(_user$project$Main$DragEnd),
-					_1: {ctor: '[]'}
-				}
-			});
-	}
-};
+				_0: startingCanvas,
+				_1: {ctor: '[]'}
+			}),
+		historyIndex: 0,
+		window: {height: 1280, width: 1280},
+		mouseOverUI: false
+	};
+}();
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{
 		init: {ctor: '_Tuple2', _0: _user$project$Main$init, _1: _elm_lang$core$Platform_Cmd$none},
 		update: _user$project$Main$update,
-		view: _user$project$Main$view,
+		view: _user$project$View$view,
 		subscriptions: _user$project$Main$subscriptions
 	})();
 var Elm = {};

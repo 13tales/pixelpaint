@@ -3,29 +3,13 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes as Html
 import Html.Events as Html
-import Svg exposing (..)
-import Svg.Attributes exposing (..)
-import Svg.Events as Svg exposing (..)
-import Svg.Lazy as Svg exposing (..)
-import Svg.Keyed as Keyed exposing (..)
-import Tree exposing (Tree(..), Bounded)
-import Array exposing (..)
-import Dict exposing (..)
+import Tree exposing (Tree(..))
 import Maybe exposing (..)
 import Mouse exposing (Position)
-import Debug exposing (log)
-import Task exposing (..)
 import Window exposing (Size)
-import Debug exposing (..)
-import PicoPalette
-import FontAwesome as FA
-import Color
 import Array exposing (Array)
-
-
-{- TODO:
-   - Grey out undo/redo buttons when there's no past/future history
--}
+import Types exposing (..)
+import View exposing (view)
 
 
 main =
@@ -54,41 +38,7 @@ init =
 
 
 
--- MODEL
-
-
-type alias Model =
-    { columns : Int
-    , rows : Int
-    , canvas : Tree Int
-    , selectedClr : Int
-    , drag : Maybe Drag
-    , history : Array (Tree Int)
-    , historyIndex : Int
-    , window : Size
-    , mouseOverUI : Bool
-    }
-
-
-type alias Drag =
-    { start : Position
-    , current : Position
-    }
-
-
-
 -- UPDATE
-
-
-type Msg
-    = DragStart Position
-    | DragAt Position
-    | DragEnd Position
-    | ColorSelection Int
-    | Undo
-    | Redo
-    | EnterUI
-    | LeaveUI
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -142,18 +92,6 @@ update msg model =
             ( { model | mouseOverUI = False }
             , Cmd.none
             )
-
-
-newPixelHelper : Model -> Position -> Bounded Int
-newPixelHelper model pos =
-    let
-        ( col, row ) =
-            tileAtCursor pos model
-
-        ( tileWidth, tileHeight ) =
-            ( model.window.width // model.columns, model.window.height // model.rows )
-    in
-        Tree.setBounds (Tree.newBox pos.x pos.y tileWidth tileHeight) model.selectedClr
 
 
 insertHelper : (Tree.BoundingBox -> Bool) -> ( Position, a ) -> Tree a -> Tree a
@@ -251,129 +189,6 @@ dragEndHelper model =
                     , history = saveHistory resetHistory newCanvas
                     , historyIndex = 0
                 }
-
-
-
--- VIEW
-
-
-view : Model -> Html Msg
-view model =
-    Html.div
-        []
-        [ Svg.svg
-            [ width "1280"
-            , height "1280"
-            , viewBox "0 0 1280 1280"
-            , Html.onMouseEnter LeaveUI
-            ]
-            [ renderTree model.canvas ]
-        , picker model
-        ]
-
-
-renderTree : Tree Int -> Svg Msg
-renderTree t =
-    case t of
-        Leaf v ->
-            renderLeaf v
-
-        Node b ne nw se sw ->
-            Svg.lazy (Svg.g [])
-                (List.map renderTree [ ne, nw, se, sw ])
-
-
-renderLeaf : Bounded Int -> Svg Msg
-renderLeaf v =
-    Svg.rect
-        [ x (toString v.boundingBox.pos.x)
-        , y (toString v.boundingBox.pos.y)
-        , width (toString v.boundingBox.size.width)
-        , height (toString v.boundingBox.size.height)
-          --, stroke "white"
-        , fill (PicoPalette.clr v.val)
-        ]
-        []
-
-
-picker : Model -> Html Msg
-picker model =
-    div
-        [ Html.style
-            [ ( "display", "flex" )
-            , ( "position", "fixed" )
-            , ( "bottom", "2em" )
-            , ( "background-color", "black" )
-            , ( "border", "0.1em solid white" )
-            , ( "border-radius", "2em" )
-            , ( "padding", "1ex" )
-            ]
-        , Html.onMouseEnter EnterUI
-        ]
-        [ div [ Html.style [ ( "display", "flex" ) ] ]
-            (List.map (swatch model.selectedClr) (List.range 1 16))
-        , div [ Html.style [ ( "display", "flex" ), ( "padding", "1ex" ) ] ]
-            [ undoBtn model
-            , redoBtn model
-            ]
-        ]
-
-
-undoBtn : Model -> Html Msg
-undoBtn model =
-    let
-        undoColour =
-            if ((Array.length model.history) - (model.historyIndex + 1)) > 0 then
-                Color.white
-            else
-                Color.darkCharcoal
-    in
-        span
-            [ Html.style [ ( "margin-right", ".5ex" ) ]
-            , onClick Undo
-            ]
-            [ FA.undo undoColour 42 ]
-
-
-redoBtn : Model -> Html Msg
-redoBtn model =
-    let
-        redoColour =
-            if model.historyIndex > 0 then
-                Color.white
-            else
-                Color.darkCharcoal
-    in
-        span
-            [ Html.style [ ( "margin-left", ".5ex" ) ]
-            , onClick Redo
-            ]
-            [ FA.repeat redoColour 42 ]
-
-
-swatch : Int -> Int -> Html Msg
-swatch selectedClr swatchClr =
-    let
-        border =
-            if selectedClr == swatchClr then
-                ( "border", "0.2em solid white" )
-            else
-                ( "border", "0.1em solid white" )
-    in
-        div
-            [ Html.style
-                [ ( "background-color", PicoPalette.clr swatchClr )
-                , ( "height", "3em" )
-                , ( "width", "3em" )
-                , ( "display", "flex" )
-                , ( "border-radius", "50%" )
-                , ( "border-color", "white" )
-                , border
-                , ( "margin", ".3em" )
-                ]
-            , onClick (ColorSelection swatchClr)
-            ]
-            []
 
 
 
