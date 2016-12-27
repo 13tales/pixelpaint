@@ -8988,6 +8988,174 @@ var _elm_lang$html$Html_Events$Options = F2(
 	function (a, b) {
 		return {stopPropagation: a, preventDefault: b};
 	});
+var _elm_lang$keyboard$Keyboard$onSelfMsg = F3(
+	function (router, _p0, state) {
+		var _p1 = _p0;
+		var _p2 = A2(_elm_lang$core$Dict$get, _p1.category, state);
+		if (_p2.ctor === 'Nothing') {
+			return _elm_lang$core$Task$succeed(state);
+		} else {
+			var send = function (tagger) {
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					tagger(_p1.keyCode));
+			};
+			return A2(
+				_elm_lang$core$Task$andThen,
+				function (_p3) {
+					return _elm_lang$core$Task$succeed(state);
+				},
+				_elm_lang$core$Task$sequence(
+					A2(_elm_lang$core$List$map, send, _p2._0.taggers)));
+		}
+	});
+var _elm_lang$keyboard$Keyboard_ops = _elm_lang$keyboard$Keyboard_ops || {};
+_elm_lang$keyboard$Keyboard_ops['&>'] = F2(
+	function (task1, task2) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			function (_p4) {
+				return task2;
+			},
+			task1);
+	});
+var _elm_lang$keyboard$Keyboard$init = _elm_lang$core$Task$succeed(_elm_lang$core$Dict$empty);
+var _elm_lang$keyboard$Keyboard$categorizeHelpHelp = F2(
+	function (value, maybeValues) {
+		var _p5 = maybeValues;
+		if (_p5.ctor === 'Nothing') {
+			return _elm_lang$core$Maybe$Just(
+				{
+					ctor: '::',
+					_0: value,
+					_1: {ctor: '[]'}
+				});
+		} else {
+			return _elm_lang$core$Maybe$Just(
+				{ctor: '::', _0: value, _1: _p5._0});
+		}
+	});
+var _elm_lang$keyboard$Keyboard$categorizeHelp = F2(
+	function (subs, subDict) {
+		categorizeHelp:
+		while (true) {
+			var _p6 = subs;
+			if (_p6.ctor === '[]') {
+				return subDict;
+			} else {
+				var _v4 = _p6._1,
+					_v5 = A3(
+					_elm_lang$core$Dict$update,
+					_p6._0._0,
+					_elm_lang$keyboard$Keyboard$categorizeHelpHelp(_p6._0._1),
+					subDict);
+				subs = _v4;
+				subDict = _v5;
+				continue categorizeHelp;
+			}
+		}
+	});
+var _elm_lang$keyboard$Keyboard$categorize = function (subs) {
+	return A2(_elm_lang$keyboard$Keyboard$categorizeHelp, subs, _elm_lang$core$Dict$empty);
+};
+var _elm_lang$keyboard$Keyboard$keyCode = A2(_elm_lang$core$Json_Decode$field, 'keyCode', _elm_lang$core$Json_Decode$int);
+var _elm_lang$keyboard$Keyboard$subscription = _elm_lang$core$Native_Platform.leaf('Keyboard');
+var _elm_lang$keyboard$Keyboard$Watcher = F2(
+	function (a, b) {
+		return {taggers: a, pid: b};
+	});
+var _elm_lang$keyboard$Keyboard$Msg = F2(
+	function (a, b) {
+		return {category: a, keyCode: b};
+	});
+var _elm_lang$keyboard$Keyboard$onEffects = F3(
+	function (router, newSubs, oldState) {
+		var rightStep = F3(
+			function (category, taggers, task) {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					function (state) {
+						return A2(
+							_elm_lang$core$Task$andThen,
+							function (pid) {
+								return _elm_lang$core$Task$succeed(
+									A3(
+										_elm_lang$core$Dict$insert,
+										category,
+										A2(_elm_lang$keyboard$Keyboard$Watcher, taggers, pid),
+										state));
+							},
+							_elm_lang$core$Process$spawn(
+								A3(
+									_elm_lang$dom$Dom_LowLevel$onDocument,
+									category,
+									_elm_lang$keyboard$Keyboard$keyCode,
+									function (_p7) {
+										return A2(
+											_elm_lang$core$Platform$sendToSelf,
+											router,
+											A2(_elm_lang$keyboard$Keyboard$Msg, category, _p7));
+									})));
+					},
+					task);
+			});
+		var bothStep = F4(
+			function (category, _p8, taggers, task) {
+				var _p9 = _p8;
+				return A2(
+					_elm_lang$core$Task$map,
+					A2(
+						_elm_lang$core$Dict$insert,
+						category,
+						A2(_elm_lang$keyboard$Keyboard$Watcher, taggers, _p9.pid)),
+					task);
+			});
+		var leftStep = F3(
+			function (category, _p10, task) {
+				var _p11 = _p10;
+				return A2(
+					_elm_lang$keyboard$Keyboard_ops['&>'],
+					_elm_lang$core$Process$kill(_p11.pid),
+					task);
+			});
+		return A6(
+			_elm_lang$core$Dict$merge,
+			leftStep,
+			bothStep,
+			rightStep,
+			oldState,
+			_elm_lang$keyboard$Keyboard$categorize(newSubs),
+			_elm_lang$core$Task$succeed(_elm_lang$core$Dict$empty));
+	});
+var _elm_lang$keyboard$Keyboard$MySub = F2(
+	function (a, b) {
+		return {ctor: 'MySub', _0: a, _1: b};
+	});
+var _elm_lang$keyboard$Keyboard$presses = function (tagger) {
+	return _elm_lang$keyboard$Keyboard$subscription(
+		A2(_elm_lang$keyboard$Keyboard$MySub, 'keypress', tagger));
+};
+var _elm_lang$keyboard$Keyboard$downs = function (tagger) {
+	return _elm_lang$keyboard$Keyboard$subscription(
+		A2(_elm_lang$keyboard$Keyboard$MySub, 'keydown', tagger));
+};
+var _elm_lang$keyboard$Keyboard$ups = function (tagger) {
+	return _elm_lang$keyboard$Keyboard$subscription(
+		A2(_elm_lang$keyboard$Keyboard$MySub, 'keyup', tagger));
+};
+var _elm_lang$keyboard$Keyboard$subMap = F2(
+	function (func, _p12) {
+		var _p13 = _p12;
+		return A2(
+			_elm_lang$keyboard$Keyboard$MySub,
+			_p13._0,
+			function (_p14) {
+				return func(
+					_p13._1(_p14));
+			});
+	});
+_elm_lang$core$Native_Platform.effectManagers['Keyboard'] = {pkg: 'elm-lang/keyboard', init: _elm_lang$keyboard$Keyboard$init, onEffects: _elm_lang$keyboard$Keyboard$onEffects, onSelfMsg: _elm_lang$keyboard$Keyboard$onSelfMsg, tag: 'sub', subMap: _elm_lang$keyboard$Keyboard$subMap};
 var _elm_lang$mouse$Mouse_ops = _elm_lang$mouse$Mouse_ops || {};
 _elm_lang$mouse$Mouse_ops['&>'] = F2(
 	function (t1, t2) {
@@ -10561,14 +10729,238 @@ var _user$project$Tree$cullTree = function (t) {
 		}
 	}
 };
-var _user$project$Types$Model = F9(
-	function (a, b, c, d, e, f, g, h, i) {
-		return {columns: a, rows: b, canvas: c, selectedClr: d, drag: e, history: f, historyIndex: g, window: h, mouseOverUI: i};
+var _user$project$SelectionList$selectedIndex = function (list) {
+	return _elm_lang$core$List$length(list.previous);
+};
+var _user$project$SelectionList$previous = function (list) {
+	var _p0 = list.previous;
+	if (_p0.ctor === '[]') {
+		return list;
+	} else {
+		return _elm_lang$core$Native_Utils.update(
+			list,
+			{
+				selected: _p0._0,
+				previous: _p0._1,
+				next: {ctor: '::', _0: list.selected, _1: list.next}
+			});
+	}
+};
+var _user$project$SelectionList$next = function (list) {
+	var _p1 = list.next;
+	if (_p1.ctor === '[]') {
+		return list;
+	} else {
+		return _elm_lang$core$Native_Utils.update(
+			list,
+			{
+				selected: _p1._0,
+				previous: {ctor: '::', _0: list.selected, _1: list.previous},
+				next: _p1._1
+			});
+	}
+};
+var _user$project$SelectionList$goto = F2(
+	function (n, list) {
+		$goto:
+		while (true) {
+			var curIndex = _user$project$SelectionList$selectedIndex(list);
+			if (_elm_lang$core$Native_Utils.eq(curIndex, n)) {
+				return list;
+			} else {
+				if ((_elm_lang$core$Native_Utils.cmp(curIndex, n) < 0) && (_elm_lang$core$Native_Utils.cmp(
+					_elm_lang$core$List$length(list.next),
+					0) > 0)) {
+					var _v2 = n,
+						_v3 = _user$project$SelectionList$next(list);
+					n = _v2;
+					list = _v3;
+					continue $goto;
+				} else {
+					if (_elm_lang$core$Native_Utils.cmp(
+						curIndex,
+						A2(_elm_lang$core$Basics$max, 0, n)) > 0) {
+						var _v4 = n,
+							_v5 = _user$project$SelectionList$previous(list);
+						n = _v4;
+						list = _v5;
+						continue $goto;
+					} else {
+						return list;
+					}
+				}
+			}
+		}
 	});
+var _user$project$SelectionList$selectedMap = F2(
+	function (f, list) {
+		return _elm_lang$core$Native_Utils.update(
+			list,
+			{
+				previous: A2(
+					_elm_lang$core$List$map,
+					f(false),
+					list.previous),
+				selected: A2(f, true, list.selected),
+				next: A2(
+					_elm_lang$core$List$map,
+					f(false),
+					list.next)
+			});
+	});
+var _user$project$SelectionList$indexedMap = F2(
+	function (f, list) {
+		var nextLength = _elm_lang$core$List$length(list.next);
+		var previousLength = _elm_lang$core$List$length(list.previous);
+		return _elm_lang$core$Native_Utils.update(
+			list,
+			{
+				previous: _elm_lang$core$List$reverse(
+					A2(
+						_elm_lang$core$List$indexedMap,
+						f,
+						_elm_lang$core$List$reverse(list.previous))),
+				selected: A2(f, previousLength, list.selected),
+				next: A2(
+					_elm_lang$core$List$indexedMap,
+					function (index) {
+						return f((index + previousLength) + 1);
+					},
+					list.next)
+			});
+	});
+var _user$project$SelectionList$map2 = F3(
+	function (f, listA, listB) {
+		return _elm_lang$core$Native_Utils.update(
+			listA,
+			{
+				previous: A3(_elm_lang$core$List$map2, f, listA.previous, listB.previous),
+				selected: A2(f, listA.selected, listB.selected),
+				next: A3(_elm_lang$core$List$map2, f, listA.next, listB.next)
+			});
+	});
+var _user$project$SelectionList$andMap = _user$project$SelectionList$map2(
+	F2(
+		function (x, y) {
+			return x(y);
+		}));
+var _user$project$SelectionList$updateN = F3(
+	function (n, f, list) {
+		return A2(
+			_user$project$SelectionList$indexedMap,
+			F2(
+				function (index, value) {
+					return _elm_lang$core$Native_Utils.eq(index, n) ? f(value) : value;
+				}),
+			list);
+	});
+var _user$project$SelectionList$updateSelected = F2(
+	function (f, list) {
+		return _elm_lang$core$Native_Utils.update(
+			list,
+			{
+				selected: f(list.selected)
+			});
+	});
+var _user$project$SelectionList$map = F2(
+	function (f, list) {
+		return _elm_lang$core$Native_Utils.update(
+			list,
+			{
+				previous: A2(_elm_lang$core$List$map, f, list.previous),
+				selected: f(list.selected),
+				next: A2(_elm_lang$core$List$map, f, list.next)
+			});
+	});
+var _user$project$SelectionList$length = function (list) {
+	return (_elm_lang$core$List$length(list.previous) + 1) + _elm_lang$core$List$length(list.next);
+};
+var _user$project$SelectionList$cycleSelection = function (list) {
+	var reachedLastItem = _elm_lang$core$Native_Utils.eq(
+		_user$project$SelectionList$selectedIndex(list),
+		_user$project$SelectionList$length(list) - 1) ? true : false;
+	var _p2 = reachedLastItem;
+	if (_p2 === true) {
+		return A2(_user$project$SelectionList$goto, 0, list);
+	} else {
+		return _user$project$SelectionList$next(list);
+	}
+};
+var _user$project$SelectionList$toList = function (list) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_elm_lang$core$List$reverse(list.previous),
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			{
+				ctor: '::',
+				_0: list.selected,
+				_1: {ctor: '[]'}
+			},
+			list.next));
+};
+var _user$project$SelectionList$SelectionList = F3(
+	function (a, b, c) {
+		return {previous: a, selected: b, next: c};
+	});
+var _user$project$SelectionList$fromList = F2(
+	function (selected, next) {
+		return A3(
+			_user$project$SelectionList$SelectionList,
+			{ctor: '[]'},
+			selected,
+			next);
+	});
+var _user$project$Types$brushSizeToInt = function (size) {
+	var _p0 = size;
+	switch (_p0.ctor) {
+		case 'One':
+			return 1;
+		case 'Four':
+			return 4;
+		case 'Eight':
+			return 8;
+		case 'Sixteen':
+			return 16;
+		default:
+			return 32;
+	}
+};
+var _user$project$Types$Model = function (a) {
+	return function (b) {
+		return function (c) {
+			return function (d) {
+				return function (e) {
+					return function (f) {
+						return function (g) {
+							return function (h) {
+								return function (i) {
+									return function (j) {
+										return function (k) {
+											return function (l) {
+												return {columns: a, rows: b, canvas: c, selectedClr: d, drag: e, history: f, historyIndex: g, window: h, mouseOverUI: i, treeDebugOutline: j, currentTool: k, brushSize: l};
+											};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
 var _user$project$Types$Drag = F2(
 	function (a, b) {
 		return {start: a, current: b};
 	});
+var _user$project$Types$NoOp = {ctor: 'NoOp'};
+var _user$project$Types$CycleBrushSize = {ctor: 'CycleBrushSize'};
+var _user$project$Types$ChooseTool = function (a) {
+	return {ctor: 'ChooseTool', _0: a};
+};
+var _user$project$Types$ToggleDebug = {ctor: 'ToggleDebug'};
 var _user$project$Types$LeaveUI = {ctor: 'LeaveUI'};
 var _user$project$Types$EnterUI = {ctor: 'EnterUI'};
 var _user$project$Types$Redo = {ctor: 'Redo'};
@@ -10589,6 +10981,13 @@ var _user$project$Types$Right = {ctor: 'Right'};
 var _user$project$Types$Bottom = {ctor: 'Bottom'};
 var _user$project$Types$Left = {ctor: 'Left'};
 var _user$project$Types$Top = {ctor: 'Top'};
+var _user$project$Types$CircleBrush = {ctor: 'CircleBrush'};
+var _user$project$Types$SquareBrush = {ctor: 'SquareBrush'};
+var _user$project$Types$ThirtyTwo = {ctor: 'ThirtyTwo'};
+var _user$project$Types$Sixteen = {ctor: 'Sixteen'};
+var _user$project$Types$Eight = {ctor: 'Eight'};
+var _user$project$Types$Four = {ctor: 'Four'};
+var _user$project$Types$One = {ctor: 'One'};
 var _user$project$PicoPalette$svgPalette = function () {
 	var colorList = {
 		ctor: '::',
@@ -10662,6 +11061,168 @@ var _user$project$PicoPalette$clr = function (color) {
 	var key = _elm_lang$core$Basics$toString(color);
 	return A2(_elm_lang$core$Maybe$withDefault, '#FFFFFF', value);
 };
+var _user$project$PickerUI$selectionCircle = function (isSelected) {
+	var _p0 = isSelected;
+	if (_p0 === true) {
+		return A2(_jystic$elm_font_awesome$FontAwesome$circle, _elm_lang$core$Color$white, 8);
+	} else {
+		return A2(_jystic$elm_font_awesome$FontAwesome$circle_o, _elm_lang$core$Color$white, 8);
+	}
+};
+var _user$project$PickerUI$selectionDisplay = function (s) {
+	var f = function (_p1) {
+		return _user$project$PickerUI$selectionCircle(
+			function (v) {
+				return _elm_lang$core$Native_Utils.eq(v, s.selected) ? true : false;
+			}(_p1));
+	};
+	return _user$project$SelectionList$toList(
+		A2(_user$project$SelectionList$map, f, s));
+};
+var _user$project$PickerUI$brushSizePicker = F2(
+	function (msg, model) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'width', _1: '48px'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'height', _1: '48px'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'row'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'justify-content', _1: 'center'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'align-items', _1: 'flex-end'},
+											_1: {
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'flex-wrap', _1: 'wrap'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'padding-bottom', _1: '1.5ex'},
+													_1: {ctor: '[]'}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Events$onClick(msg),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: A2(_jystic$elm_font_awesome$FontAwesome$paint_brush, _elm_lang$core$Color$white, 20),
+						_1: {
+							ctor: '::',
+							_0: A2(_jystic$elm_font_awesome$FontAwesome$expand, _elm_lang$core$Color$white, 20),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$span,
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'font-family', _1: 'futura'},
+												_1: {
+													ctor: '::',
+													_0: {ctor: '_Tuple2', _0: 'font-size', _1: '10pt'},
+													_1: {
+														ctor: '::',
+														_0: {ctor: '_Tuple2', _0: 'color', _1: 'white'},
+														_1: {
+															ctor: '::',
+															_0: {ctor: '_Tuple2', _0: 'display', _1: 'block'},
+															_1: {ctor: '[]'}
+														}
+													}
+												}
+											}),
+										_1: {ctor: '[]'}
+									},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text(
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												_elm_lang$core$Basics$toString(
+													_user$project$Types$brushSizeToInt(model.brushSize.selected)),
+												' pix')),
+										_1: {ctor: '[]'}
+									}),
+								_1: {ctor: '[]'}
+							}
+						}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$div,
+						{ctor: '[]'},
+						_user$project$PickerUI$selectionDisplay(model.brushSize)),
+					_1: {ctor: '[]'}
+				}
+			});
+	});
+var _user$project$PickerUI$squareBrush = function (model) {
+	return A2(
+		_elm_lang$svg$Svg$svg,
+		{
+			ctor: '::',
+			_0: _elm_lang$svg$Svg_Attributes$width('48'),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$svg$Svg_Attributes$height('48'),
+				_1: {ctor: '[]'}
+			}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$svg$Svg$rect,
+				{
+					ctor: '::',
+					_0: _elm_lang$svg$Svg_Attributes$width('32'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$svg$Svg_Attributes$height('32'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$svg$Svg_Attributes$stroke('white'),
+							_1: {
+								ctor: '::',
+								_0: _elm_lang$svg$Svg_Attributes$fill('black'),
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				},
+				{ctor: '[]'}),
+			_1: {ctor: '[]'}
+		});
+};
 var _user$project$PickerUI$colourSwatch = F2(
 	function (swatchClr, model) {
 		var border = _elm_lang$core$Native_Utils.eq(model.selectedClr, swatchClr) ? {ctor: '_Tuple2', _0: 'border', _1: '0.2em solid white'} : {ctor: '_Tuple2', _0: 'border', _1: '0.1em solid white'};
@@ -10720,9 +11281,11 @@ var _user$project$PickerUI$swatches = A2(
 	_elm_lang$core$List$map,
 	_user$project$PickerUI$colourSwatch,
 	A2(_elm_lang$core$List$range, 1, 16));
+var _user$project$PickerUI$btnColour = function (active) {
+	return _elm_lang$core$Native_Utils.eq(active, true) ? _elm_lang$core$Color$white : _elm_lang$core$Color$darkCharcoal;
+};
 var _user$project$PickerUI$iconBtn = F4(
 	function (element, isActive, msg, model) {
-		var btnColour = _elm_lang$core$Native_Utils.eq(isActive, true) ? _elm_lang$core$Color$white : _elm_lang$core$Color$darkCharcoal;
 		return A2(
 			_elm_lang$html$Html$span,
 			{
@@ -10741,7 +11304,10 @@ var _user$project$PickerUI$iconBtn = F4(
 			},
 			{
 				ctor: '::',
-				_0: A2(element, btnColour, 52),
+				_0: A2(
+					element,
+					_user$project$PickerUI$btnColour(isActive),
+					48),
 				_1: {ctor: '[]'}
 			});
 	});
@@ -10751,23 +11317,23 @@ var _user$project$PickerUI$reverseMap = F2(
 			function (f, a, r) {
 				inner:
 				while (true) {
-					var _p0 = f;
-					if (_p0.ctor === '[]') {
+					var _p2 = f;
+					if (_p2.ctor === '[]') {
 						return r;
 					} else {
-						var _v1 = _p0._1,
-							_v2 = a,
-							_v3 = A2(
+						var _v2 = _p2._1,
+							_v3 = a,
+							_v4 = A2(
 							_elm_lang$core$List$append,
 							r,
 							{
 								ctor: '::',
-								_0: _p0._0(a),
+								_0: _p2._0(a),
 								_1: {ctor: '[]'}
 							});
-						f = _v1;
-						a = _v2;
-						r = _v3;
+						f = _v2;
+						a = _v3;
+						r = _v4;
 						continue inner;
 					}
 				}
@@ -10780,69 +11346,157 @@ var _user$project$PickerUI$reverseMap = F2(
 	});
 var _user$project$PickerUI$buildUI = F3(
 	function (model, controls, position) {
-		var posAttributes = function () {
-			var _p1 = position;
-			switch (_p1.ctor) {
-				case 'Top':
-					return {
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'top', _1: '2em'},
-						_1: {ctor: '[]'}
-					};
-				case 'Left':
-					return {
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'left', _1: '2em'},
-						_1: {ctor: '[]'}
-					};
-				case 'Bottom':
-					return {
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'bottom', _1: '2em'},
-						_1: {ctor: '[]'}
-					};
-				default:
-					return {
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'right', _1: '2em'},
-						_1: {ctor: '[]'}
-					};
-			}
-		}();
-		return A2(
-			_elm_lang$html$Html$div,
-			{
+		var pickerStandard = {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+			_1: {
 				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
+				_0: {ctor: '_Tuple2', _0: 'flex-wrap', _1: 'wrap'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
+					_1: {
 						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+						_0: {ctor: '_Tuple2', _0: 'border', _1: '0.1em solid white'},
 						_1: {
 							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'position', _1: 'fixed'},
+							_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '2em'},
 							_1: {
 								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+								_0: {ctor: '_Tuple2', _0: 'padding', _1: '1ex'},
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}
+			}
+		};
+		var pickerStyle = A2(
+			_elm_lang$core$List$append,
+			pickerStandard,
+			(_elm_lang$core$Native_Utils.eq(position, _user$project$Types$Bottom) || _elm_lang$core$Native_Utils.eq(position, _user$project$Types$Top)) ? {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'row'},
+				_1: {ctor: '[]'}
+			} : {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+				_1: {ctor: '[]'}
+			});
+		var containerStandard = {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
+			_1: {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'position', _1: 'fixed'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'align-items', _1: 'center'},
+					_1: {ctor: '[]'}
+				}
+			}
+		};
+		var containerStyle = A2(
+			_elm_lang$core$List$append,
+			containerStandard,
+			function () {
+				var _p3 = position;
+				switch (_p3.ctor) {
+					case 'Bottom':
+						return {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'bottom', _1: '1em'},
 								_1: {
 									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'align-items', _1: 'center'},
+									_0: {ctor: '_Tuple2', _0: 'height', _1: 'auto'},
 									_1: {
 										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'bottom', _1: '1em'},
+										_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						};
+					case 'Top':
+						return {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'column'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'top', _1: '1em'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'height', _1: 'auto'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+										_1: {ctor: '[]'}
+									}
+								}
+							}
+						};
+					case 'Left':
+						return {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'row'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'left', _1: '1em'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'top', _1: '1em'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'width', _1: 'auto'},
 										_1: {
 											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'height', _1: 'auto'},
+											_0: {ctor: '_Tuple2', _0: 'min-height', _1: '6em'},
 											_1: {
 												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+												_0: {ctor: '_Tuple2', _0: 'height', _1: '100%'},
 												_1: {ctor: '[]'}
 											}
 										}
 									}
 								}
 							}
-						}
-					}),
+						};
+					default:
+						return {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'flex-direction', _1: 'row'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'right', _1: '1em'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'top', _1: '1em'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'width', _1: 'auto'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'min-height', _1: '4em'},
+											_1: {
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'height', _1: '100%'},
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								}
+							}
+						};
+				}
+			}());
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(containerStyle),
 				_1: {ctor: '[]'}
 			},
 			{
@@ -10851,32 +11505,7 @@ var _user$project$PickerUI$buildUI = F3(
 					_elm_lang$html$Html$div,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$style(
-							{
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'display', _1: 'flex'},
-								_1: {
-									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'flex-wrap', _1: 'wrap'},
-									_1: {
-										ctor: '::',
-										_0: {ctor: '_Tuple2', _0: 'background-color', _1: 'black'},
-										_1: {
-											ctor: '::',
-											_0: {ctor: '_Tuple2', _0: 'border', _1: '0.1em solid white'},
-											_1: {
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'border-radius', _1: '2em'},
-												_1: {
-													ctor: '::',
-													_0: {ctor: '_Tuple2', _0: 'padding', _1: '1ex'},
-													_1: {ctor: '[]'}
-												}
-											}
-										}
-									}
-								}
-							}),
+						_0: _elm_lang$html$Html_Attributes$style(pickerStyle),
 						_1: {
 							ctor: '::',
 							_0: _elm_lang$html$Html_Events$onMouseEnter(_user$project$Types$EnterUI),
@@ -10887,73 +11516,80 @@ var _user$project$PickerUI$buildUI = F3(
 				_1: {ctor: '[]'}
 			});
 	});
-var _user$project$View$renderLeaf = function (v) {
-	return A2(
-		_elm_lang$svg$Svg$rect,
-		{
-			ctor: '::',
-			_0: _elm_lang$svg$Svg_Attributes$x(
-				_elm_lang$core$Basics$toString(v.boundingBox.pos.x)),
-			_1: {
+var _user$project$View$renderLeaf = F2(
+	function (debug, v) {
+		var ifDebug = _elm_lang$core$Native_Utils.eq(debug, true) ? 'white' : 'none';
+		return A2(
+			_elm_lang$svg$Svg$rect,
+			{
 				ctor: '::',
-				_0: _elm_lang$svg$Svg_Attributes$y(
-					_elm_lang$core$Basics$toString(v.boundingBox.pos.y)),
+				_0: _elm_lang$svg$Svg_Attributes$x(
+					_elm_lang$core$Basics$toString(v.boundingBox.pos.x)),
 				_1: {
 					ctor: '::',
-					_0: _elm_lang$svg$Svg_Attributes$width(
-						_elm_lang$core$Basics$toString(v.boundingBox.size.width)),
+					_0: _elm_lang$svg$Svg_Attributes$y(
+						_elm_lang$core$Basics$toString(v.boundingBox.pos.y)),
 					_1: {
 						ctor: '::',
-						_0: _elm_lang$svg$Svg_Attributes$height(
-							_elm_lang$core$Basics$toString(v.boundingBox.size.height)),
+						_0: _elm_lang$svg$Svg_Attributes$width(
+							_elm_lang$core$Basics$toString(v.boundingBox.size.width)),
 						_1: {
 							ctor: '::',
-							_0: _elm_lang$svg$Svg_Attributes$stroke('white'),
+							_0: _elm_lang$svg$Svg_Attributes$height(
+								_elm_lang$core$Basics$toString(v.boundingBox.size.height)),
 							_1: {
 								ctor: '::',
-								_0: _elm_lang$svg$Svg_Attributes$fill(
-									_user$project$PicoPalette$clr(v.val)),
-								_1: {ctor: '[]'}
+								_0: _elm_lang$svg$Svg_Attributes$stroke(ifDebug),
+								_1: {
+									ctor: '::',
+									_0: _elm_lang$svg$Svg_Attributes$fill(
+										_user$project$PicoPalette$clr(v.val)),
+									_1: {ctor: '[]'}
+								}
 							}
 						}
 					}
 				}
-			}
-		},
-		{ctor: '[]'});
-};
-var _user$project$View$renderTree = function (t) {
-	var _p0 = t;
-	if (_p0.ctor === 'Leaf') {
-		return _user$project$View$renderLeaf(_p0._0);
-	} else {
-		return A2(
-			_elm_lang$svg$Svg_Lazy$lazy,
-			_elm_lang$svg$Svg$g(
-				{ctor: '[]'}),
-			A2(
-				_elm_lang$core$List$map,
-				_user$project$View$renderTree,
-				{
-					ctor: '::',
-					_0: _p0._1,
-					_1: {
+			},
+			{ctor: '[]'});
+	});
+var _user$project$View$renderTree = F2(
+	function (debug, t) {
+		var _p0 = t;
+		if (_p0.ctor === 'Leaf') {
+			return A2(_user$project$View$renderLeaf, debug, _p0._0);
+		} else {
+			return A2(
+				_elm_lang$svg$Svg_Lazy$lazy,
+				_elm_lang$svg$Svg$g(
+					{ctor: '[]'}),
+				A2(
+					_elm_lang$core$List$map,
+					_user$project$View$renderTree(debug),
+					{
 						ctor: '::',
-						_0: _p0._2,
+						_0: _p0._1,
 						_1: {
 							ctor: '::',
-							_0: _p0._3,
+							_0: _p0._2,
 							_1: {
 								ctor: '::',
-								_0: _p0._4,
-								_1: {ctor: '[]'}
+								_0: _p0._3,
+								_1: {
+									ctor: '::',
+									_0: _p0._4,
+									_1: {ctor: '[]'}
+								}
 							}
 						}
-					}
-				}));
-	}
-};
+					}));
+		}
+	});
 var _user$project$View$view = function (model) {
+	var isActiveTool = function (t) {
+		return _elm_lang$core$Native_Utils.eq(model.currentTool, t) ? true : false;
+	};
+	var panel = _user$project$PickerUI$buildUI(model);
 	var canRedo = _elm_lang$core$Native_Utils.cmp(model.historyIndex, 0) > 0;
 	var canUndo = _elm_lang$core$Native_Utils.cmp(
 		_elm_lang$core$Array$length(model.history) - (model.historyIndex + 1),
@@ -10984,35 +11620,69 @@ var _user$project$View$view = function (model) {
 				},
 				{
 					ctor: '::',
-					_0: _user$project$View$renderTree(model.canvas),
+					_0: A2(_user$project$View$renderTree, model.treeDebugOutline, model.canvas),
 					_1: {ctor: '[]'}
 				}),
 			_1: {
 				ctor: '::',
-				_0: A3(
-					_user$project$PickerUI$buildUI,
-					model,
-					A2(
-						_elm_lang$core$List$append,
-						_user$project$PickerUI$swatches,
+				_0: A2(panel, _user$project$PickerUI$swatches, _user$project$Types$Bottom),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						panel,
 						{
 							ctor: '::',
-							_0: A3(_user$project$PickerUI$iconBtn, _jystic$elm_font_awesome$FontAwesome$undo, canUndo, _user$project$Types$Undo),
+							_0: A3(
+								_user$project$PickerUI$iconBtn,
+								_jystic$elm_font_awesome$FontAwesome$square,
+								isActiveTool(_user$project$Types$SquareBrush),
+								_user$project$Types$ChooseTool(_user$project$Types$SquareBrush)),
 							_1: {
 								ctor: '::',
-								_0: A3(_user$project$PickerUI$iconBtn, _jystic$elm_font_awesome$FontAwesome$repeat, canRedo, _user$project$Types$Redo),
-								_1: {ctor: '[]'}
+								_0: A3(
+									_user$project$PickerUI$iconBtn,
+									_jystic$elm_font_awesome$FontAwesome$circle,
+									isActiveTool(_user$project$Types$CircleBrush),
+									_user$project$Types$ChooseTool(_user$project$Types$CircleBrush)),
+								_1: {
+									ctor: '::',
+									_0: _user$project$PickerUI$brushSizePicker(_user$project$Types$CycleBrushSize),
+									_1: {
+										ctor: '::',
+										_0: A3(_user$project$PickerUI$iconBtn, _jystic$elm_font_awesome$FontAwesome$step_backward, canUndo, _user$project$Types$Undo),
+										_1: {
+											ctor: '::',
+											_0: A3(_user$project$PickerUI$iconBtn, _jystic$elm_font_awesome$FontAwesome$step_forward, canRedo, _user$project$Types$Redo),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
 							}
-						}),
-					_user$project$Types$Bottom),
-				_1: {ctor: '[]'}
+						},
+						_user$project$Types$Left),
+					_1: {ctor: '[]'}
+				}
 			}
 		});
 };
+var _user$project$Main$debugKey = _elm_lang$core$Char$toCode(
+	_elm_lang$core$Native_Utils.chr('`'));
 var _user$project$Main$subscriptions = function (model) {
 	var _p0 = model.drag;
 	if (_p0.ctor === 'Nothing') {
-		return (!model.mouseOverUI) ? _elm_lang$mouse$Mouse$downs(_user$project$Types$DragStart) : _elm_lang$core$Platform_Sub$none;
+		return (!model.mouseOverUI) ? _elm_lang$core$Platform_Sub$batch(
+			{
+				ctor: '::',
+				_0: _elm_lang$mouse$Mouse$downs(_user$project$Types$DragStart),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$keyboard$Keyboard$presses(
+						function (p) {
+							return _elm_lang$core$Native_Utils.eq(p, _user$project$Main$debugKey) ? _user$project$Types$ToggleDebug : _user$project$Types$NoOp;
+						}),
+					_1: {ctor: '[]'}
+				}
+			}) : _elm_lang$core$Platform_Sub$none;
 	} else {
 		return _elm_lang$core$Platform_Sub$batch(
 			{
@@ -11028,37 +11698,76 @@ var _user$project$Main$subscriptions = function (model) {
 };
 var _user$project$Main$pointInRegion = F2(
 	function (cursorPos, region) {
-		return (_elm_lang$core$Native_Utils.cmp(cursorPos.x, region.pos.x) > -1) && ((_elm_lang$core$Native_Utils.cmp(cursorPos.x, region.pos.x + region.size.width) < 1) && ((_elm_lang$core$Native_Utils.cmp(cursorPos.y, region.pos.y) > -1) && (_elm_lang$core$Native_Utils.cmp(cursorPos.y, region.pos.y + region.size.height) < 1)));
+		return A2(
+			_elm_lang$core$Debug$log,
+			'x match: ',
+			(_elm_lang$core$Native_Utils.cmp(cursorPos.x, region.pos.x) > -1) && (_elm_lang$core$Native_Utils.cmp(cursorPos.x, region.pos.x + region.size.width) < 1)) && A2(
+			_elm_lang$core$Debug$log,
+			'y match: ',
+			(_elm_lang$core$Native_Utils.cmp(cursorPos.y, region.pos.y) > -1) && (_elm_lang$core$Native_Utils.cmp(cursorPos.y, region.pos.y + region.size.height) < 1));
 	});
 var _user$project$Main$boxInRegion = F2(
 	function (newTile, region) {
 		return (_elm_lang$core$Native_Utils.cmp(newTile.pos.x + newTile.size.width, region.pos.x + region.size.width) < 1) && ((_elm_lang$core$Native_Utils.cmp(newTile.pos.x, region.pos.x) > -1) && ((_elm_lang$core$Native_Utils.cmp(newTile.pos.y + newTile.size.height, region.pos.y + region.size.height) < 1) && (_elm_lang$core$Native_Utils.cmp(newTile.pos.y, region.pos.y) > -1)));
 	});
+var _user$project$Main$getTileSize = function (model) {
+	return {ctor: '_Tuple2', _0: (model.window.width / model.columns) | 0, _1: (model.window.height / model.rows) | 0};
+};
+var _user$project$Main$intersectSquare = F3(
+	function (model, cursorPos, boxToCheck) {
+		var boxCentre = _user$project$Tree$boxCentre(boxToCheck);
+		var brushSize = _user$project$Types$brushSizeToInt(model.brushSize.selected);
+		var _p1 = _user$project$Main$getTileSize(model);
+		var tileWidth = _p1._0;
+		var tileHeight = _p1._1;
+		var _p2 = {ctor: '_Tuple2', _0: ((brushSize / 2) | 0) * tileWidth, _1: ((brushSize / 2) | 0) * tileHeight};
+		var xOffset = _p2._0;
+		var yOffset = _p2._1;
+		var _p3 = {ctor: '_Tuple2', _0: brushSize * tileWidth, _1: brushSize * tileHeight};
+		var boxWidth = _p3._0;
+		var boxHeight = _p3._1;
+		var brushBox = A2(
+			_elm_lang$core$Debug$log,
+			'brushbox: ',
+			A4(_user$project$Tree$newBox, cursorPos.x - xOffset, cursorPos.y - yOffset, boxWidth, boxHeight));
+		var brushCentre = _user$project$Tree$boxCentre(brushBox);
+		return A2(
+			_elm_lang$core$Debug$log,
+			'checkresult: ',
+			(_elm_lang$core$Native_Utils.cmp(
+				_elm_lang$core$Basics$abs(boxCentre.x - brushCentre.x) * 2,
+				brushBox.size.width + boxToCheck.size.width) < 0) && (_elm_lang$core$Native_Utils.cmp(
+				_elm_lang$core$Basics$abs(boxCentre.y - brushCentre.y) * 2,
+				brushBox.size.height + boxToCheck.size.height) < 0));
+	});
 var _user$project$Main$tileAtCursor = F2(
 	function (pos, model) {
-		var height = _elm_lang$core$Basics$toFloat(model.window.height);
-		var width = _elm_lang$core$Basics$toFloat(model.window.width);
+		var _p4 = _user$project$Main$getTileSize(model);
+		var width = _p4._0;
+		var height = _p4._1;
 		var rows = _elm_lang$core$Basics$toFloat(model.rows);
 		var columns = _elm_lang$core$Basics$toFloat(model.columns);
 		var y = _elm_lang$core$Basics$toFloat(pos.y);
 		var x = _elm_lang$core$Basics$toFloat(pos.x);
 		return {
 			ctor: '_Tuple2',
-			_0: _elm_lang$core$Basics$truncate((x / width) * columns),
-			_1: _elm_lang$core$Basics$truncate((y / height) * rows)
+			_0: _elm_lang$core$Basics$truncate(
+				(x / _elm_lang$core$Basics$toFloat(width)) * columns),
+			_1: _elm_lang$core$Basics$truncate(
+				(y / _elm_lang$core$Basics$toFloat(height)) * rows)
 		};
 	});
 var _user$project$Main$historyHelper = F2(
 	function (model, step) {
 		var newIndex = model.historyIndex + step;
 		var newState = A2(_elm_lang$core$Array$get, newIndex, model.history);
-		var _p1 = newState;
-		if (_p1.ctor === 'Nothing') {
+		var _p5 = newState;
+		if (_p5.ctor === 'Nothing') {
 			return model;
 		} else {
 			return _elm_lang$core$Native_Utils.update(
 				model,
-				{canvas: _p1._0, historyIndex: newIndex});
+				{canvas: _p5._0, historyIndex: newIndex});
 		}
 	});
 var _user$project$Main$saveHistory = F2(
@@ -11083,8 +11792,8 @@ var _user$project$Main$dragEndHelper = function (model) {
 		_elm_lang$core$Array$length(model.history),
 		model.history);
 	var newCanvas = _user$project$Tree$cullTree(model.canvas);
-	var _p2 = model.historyIndex;
-	if (_p2 === 0) {
+	var _p6 = model.historyIndex;
+	if (_p6 === 0) {
 		return _elm_lang$core$Native_Utils.update(
 			model,
 			{
@@ -11103,97 +11812,124 @@ var _user$project$Main$dragEndHelper = function (model) {
 			});
 	}
 };
-var _user$project$Main$maxTreeDepth = F2(
-	function (model, box) {
-		var _p3 = {ctor: '_Tuple2', _0: (model.window.width / model.columns) | 0, _1: (model.window.height / model.rows) | 0};
-		var tileWidth = _p3._0;
-		var tileHeight = _p3._1;
-		return _elm_lang$core$Native_Utils.eq(box.size.width, tileWidth) || _elm_lang$core$Native_Utils.eq(box.size.height, tileHeight);
+var _user$project$Main$maxTreeDepth = F3(
+	function (model, brushSize, box) {
+		var tileSize = _user$project$Main$getTileSize(model);
+		var _p7 = {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Tuple$first(tileSize) * brushSize,
+			_1: _elm_lang$core$Tuple$second(tileSize) * brushSize
+		};
+		var targetWidth = _p7._0;
+		var targetHeight = _p7._1;
+		return _elm_lang$core$Native_Utils.eq(box.size.width, targetWidth) || _elm_lang$core$Native_Utils.eq(box.size.height, targetHeight);
 	});
-var _user$project$Main$insertHelper = F3(
-	function (depth, _p4, tree) {
+var _user$project$Main$insertHelper = F4(
+	function (depth, fCollision, _p8, tree) {
 		insertHelper:
 		while (true) {
-			var _p5 = _p4;
-			var _p10 = _p5._0;
-			var _p9 = _p5._1;
-			var _p6 = tree;
-			if (_p6.ctor === 'Leaf') {
-				var _p7 = _p6._0;
-				if (depth(_p7.boundingBox) && A2(_user$project$Main$pointInRegion, _p10, _p7.boundingBox)) {
-					return (!_elm_lang$core$Native_Utils.eq(_p9, _p7.val)) ? _user$project$Tree$Leaf(
+			var _p9 = _p8;
+			var _p14 = _p9._0;
+			var _p13 = _p9._1;
+			var _p10 = tree;
+			if (_p10.ctor === 'Leaf') {
+				var _p11 = _p10._0;
+				var collidesWithBrush = A2(
+					fCollision,
+					_p14,
+					A2(_elm_lang$core$Debug$log, 'Checking box: ', _p11.boundingBox));
+				if (depth(_p11.boundingBox) && collidesWithBrush) {
+					return (!_elm_lang$core$Native_Utils.eq(_p13, _p11.val)) ? _user$project$Tree$Leaf(
 						_elm_lang$core$Native_Utils.update(
-							_p7,
-							{val: _p9})) : tree;
+							_p11,
+							{val: _p13})) : tree;
 				} else {
-					if (!A2(_user$project$Main$pointInRegion, _p10, _p7.boundingBox)) {
+					if (!collidesWithBrush) {
 						return tree;
 					} else {
 						var _v5 = depth,
-							_v6 = {ctor: '_Tuple2', _0: _p10, _1: _p9},
-							_v7 = _user$project$Tree$subDivide(tree);
+							_v6 = fCollision,
+							_v7 = {ctor: '_Tuple2', _0: _p14, _1: _p13},
+							_v8 = _user$project$Tree$subDivide(tree);
 						depth = _v5;
-						_p4 = _v6;
-						tree = _v7;
+						fCollision = _v6;
+						_p8 = _v7;
+						tree = _v8;
 						continue insertHelper;
 					}
 				}
 			} else {
-				var _p8 = _p6._0;
-				return (!A2(_user$project$Main$pointInRegion, _p10, _p8)) ? tree : A5(
+				var _p12 = _p10._0;
+				return (!A2(fCollision, _p14, _p12)) ? tree : A5(
 					_user$project$Tree$Node,
-					_p8,
-					A3(
+					_p12,
+					A4(
 						_user$project$Main$insertHelper,
 						depth,
-						{ctor: '_Tuple2', _0: _p10, _1: _p9},
-						_p6._1),
-					A3(
+						fCollision,
+						{ctor: '_Tuple2', _0: _p14, _1: _p13},
+						_p10._1),
+					A4(
 						_user$project$Main$insertHelper,
 						depth,
-						{ctor: '_Tuple2', _0: _p10, _1: _p9},
-						_p6._2),
-					A3(
+						fCollision,
+						{ctor: '_Tuple2', _0: _p14, _1: _p13},
+						_p10._2),
+					A4(
 						_user$project$Main$insertHelper,
 						depth,
-						{ctor: '_Tuple2', _0: _p10, _1: _p9},
-						_p6._3),
-					A3(
+						fCollision,
+						{ctor: '_Tuple2', _0: _p14, _1: _p13},
+						_p10._3),
+					A4(
 						_user$project$Main$insertHelper,
 						depth,
-						{ctor: '_Tuple2', _0: _p10, _1: _p9},
-						_p6._4));
+						fCollision,
+						{ctor: '_Tuple2', _0: _p14, _1: _p13},
+						_p10._4));
 			}
 		}
 	});
 var _user$project$Main$addTile = F2(
 	function (model, point) {
-		var maxDepth = _user$project$Main$maxTreeDepth(model);
-		return A3(
+		var fCollision = function () {
+			var _p15 = model.currentTool;
+			if (_p15.ctor === 'SquareBrush') {
+				return _user$project$Main$pointInRegion;
+			} else {
+				return _user$project$Main$pointInRegion;
+			}
+		}();
+		var maxDepth = A2(
+			_user$project$Main$maxTreeDepth,
+			model,
+			_user$project$Types$brushSizeToInt(model.brushSize.selected));
+		return A4(
 			_user$project$Main$insertHelper,
 			maxDepth,
+			fCollision,
 			{ctor: '_Tuple2', _0: point, _1: model.selectedClr},
 			model.canvas);
 	});
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p11 = msg;
-		switch (_p11.ctor) {
+		var _p16 = msg;
+		switch (_p16.ctor) {
 			case 'DragStart':
-				var _p12 = _p11._0;
+				var _p17 = _p16._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
 							drag: _elm_lang$core$Maybe$Just(
-								A2(_user$project$Types$Drag, _p12, _p12)),
-							canvas: A2(_user$project$Main$addTile, model, _p12)
+								A2(_user$project$Types$Drag, _p17, _p17)),
+							canvas: A2(_user$project$Main$addTile, model, _p17)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DragAt':
-				var _p15 = _p11._0;
+				var _p20 = _p16._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -11201,12 +11937,12 @@ var _user$project$Main$update = F2(
 						{
 							drag: A2(
 								_elm_lang$core$Maybe$map,
-								function (_p13) {
-									var _p14 = _p13;
-									return A2(_user$project$Types$Drag, _p14.start, _p15);
+								function (_p18) {
+									var _p19 = _p18;
+									return A2(_user$project$Types$Drag, _p19.start, _p20);
 								},
 								model.drag),
-							canvas: A2(_user$project$Main$addTile, model, _p15)
+							canvas: A2(_user$project$Main$addTile, model, _p20)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -11221,7 +11957,7 @@ var _user$project$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{selectedClr: _p11._0}),
+						{selectedClr: _p16._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Undo':
@@ -11244,7 +11980,7 @@ var _user$project$Main$update = F2(
 						{mouseOverUI: true}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'LeaveUI':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -11252,6 +11988,58 @@ var _user$project$Main$update = F2(
 						{mouseOverUI: false}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
+			case 'ToggleDebug':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{treeDebugOutline: !model.treeDebugOutline}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'NoOp':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'ChooseTool':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{currentTool: _p16._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							brushSize: _user$project$SelectionList$cycleSelection(model.brushSize)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+		}
+	});
+var _user$project$Main$brushSizeList = A2(
+	_user$project$SelectionList$fromList,
+	_user$project$Types$One,
+	{
+		ctor: '::',
+		_0: _user$project$Types$One,
+		_1: {
+			ctor: '::',
+			_0: _user$project$Types$Four,
+			_1: {
+				ctor: '::',
+				_0: _user$project$Types$Eight,
+				_1: {
+					ctor: '::',
+					_0: _user$project$Types$Sixteen,
+					_1: {
+						ctor: '::',
+						_0: _user$project$Types$ThirtyTwo,
+						_1: {ctor: '[]'}
+					}
+				}
+			}
 		}
 	});
 var _user$project$Main$init = function () {
@@ -11277,7 +12065,10 @@ var _user$project$Main$init = function () {
 			}),
 		historyIndex: 0,
 		window: {height: 1280, width: 1280},
-		mouseOverUI: false
+		mouseOverUI: false,
+		treeDebugOutline: false,
+		currentTool: _user$project$Types$SquareBrush,
+		brushSize: _user$project$Main$brushSizeList
 	};
 }();
 var _user$project$Main$main = _elm_lang$html$Html$program(

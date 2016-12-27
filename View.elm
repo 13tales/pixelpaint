@@ -25,6 +25,15 @@ view model =
 
         canRedo =
             model.historyIndex > 0
+
+        panel =
+            PickerUI.buildUI model
+
+        isActiveTool t =
+            if model.currentTool == t then
+                True
+            else
+                False
     in
         Html.div
             []
@@ -34,36 +43,45 @@ view model =
                 , viewBox "0 0 1280 1280"
                 , Html.onMouseEnter LeaveUI
                 ]
-                [ renderTree model.canvas ]
-            , PickerUI.buildUI model
-                (List.append PickerUI.swatches
-                    [ PickerUI.iconBtn FA.undo canUndo Undo
-                    , PickerUI.iconBtn FA.repeat canRedo Redo
-                    ]
-                )
+                [ renderTree model.treeDebugOutline model.canvas ]
+            , panel PickerUI.swatches Bottom
+            , panel
+                [ PickerUI.iconBtn FA.square (isActiveTool SquareBrush) (ChooseTool SquareBrush)
+                , PickerUI.iconBtn FA.circle (isActiveTool CircleBrush) (ChooseTool CircleBrush)
+                , PickerUI.brushSizePicker CycleBrushSize
+                , PickerUI.iconBtn FA.step_backward canUndo Undo
+                , PickerUI.iconBtn FA.step_forward canRedo Redo
+                ]
                 Left
             ]
 
 
-renderTree : Tree Int -> Svg Msg
-renderTree t =
+renderTree : Bool -> Tree Int -> Svg Msg
+renderTree debug t =
     case t of
         Tree.Leaf v ->
-            renderLeaf v
+            renderLeaf debug v
 
         Tree.Node b ne nw se sw ->
             Svg.lazy (Svg.g [])
-                (List.map renderTree [ ne, nw, se, sw ])
+                (List.map (renderTree debug) [ ne, nw, se, sw ])
 
 
-renderLeaf : Tree.Bounded Int -> Svg Msg
-renderLeaf v =
-    Svg.rect
-        [ x (toString v.boundingBox.pos.x)
-        , y (toString v.boundingBox.pos.y)
-        , width (toString v.boundingBox.size.width)
-        , height (toString v.boundingBox.size.height)
-        , stroke "white"
-        , fill (PicoPalette.clr v.val)
-        ]
-        []
+renderLeaf : Bool -> Tree.Bounded Int -> Svg Msg
+renderLeaf debug v =
+    let
+        ifDebug =
+            if debug == True then
+                "white"
+            else
+                "none"
+    in
+        Svg.rect
+            [ x (toString v.boundingBox.pos.x)
+            , y (toString v.boundingBox.pos.y)
+            , width (toString v.boundingBox.size.width)
+            , height (toString v.boundingBox.size.height)
+            , stroke ifDebug
+            , fill (PicoPalette.clr v.val)
+            ]
+            []

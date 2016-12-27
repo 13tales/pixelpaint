@@ -4,6 +4,7 @@ import Mouse exposing (Position)
 import Tree exposing (Tree)
 import Array exposing (Array)
 import Window exposing (Size)
+import SelectionList exposing (SelectionList)
 
 
 type alias Model =
@@ -16,6 +17,9 @@ type alias Model =
     , historyIndex : Int
     , window : Size
     , mouseOverUI : Bool
+    , treeDebugOutline : Bool
+    , currentTool : Tool
+    , brushSize : SelectionList BrushSize
     }
 
 
@@ -34,6 +38,10 @@ type Msg
     | Redo
     | EnterUI
     | LeaveUI
+    | ToggleDebug
+    | ChooseTool Tool
+    | CycleBrushSize
+    | NoOp
 
 
 type UIposition
@@ -41,3 +49,51 @@ type UIposition
     | Left
     | Bottom
     | Right
+
+
+type Tool
+    = SquareBrush
+    | CircleBrush
+
+
+type BrushSize
+    = One
+    | Four
+    | Eight
+    | Sixteen
+    | ThirtyTwo
+
+
+brushSizeToInt : BrushSize -> Int
+brushSizeToInt size =
+    case size of
+        One ->
+            1
+
+        Four ->
+            4
+
+        Eight ->
+            8
+
+        Sixteen ->
+            16
+
+        ThirtyTwo ->
+            32
+
+
+
+{- type alias SelectionList a =
+       { previous : List a
+       , selected : a
+       , next : List a
+       }
+
+
+   cycleSelection : SelectionList a -> SelectionList a
+   cycleSelection s =
+       { s
+       | previous = List.append s.previous s.selected
+       , selected = Maybe.withDefault
+-}

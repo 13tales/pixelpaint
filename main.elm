@@ -10,6 +10,20 @@ import Window exposing (Size)
 import Array exposing (Array)
 import Types exposing (..)
 import View exposing (view)
+import Keyboard exposing (KeyCode)
+import Char
+import Debug
+import Tuple
+import SelectionList exposing (SelectionList)
+
+
+{- TODO:
+   - Add size change UI for square brush
+   - Change brush selection visuals to avoid conflict with undo/redo semantics
+   - Implement round brush
+   - Add flood fill
+   - Implement variable canvas sizing
+-}
 
 
 main =
@@ -34,7 +48,15 @@ init =
         , historyIndex = 0
         , window = { height = 1280, width = 1280 }
         , mouseOverUI = False
+        , treeDebugOutline = False
+        , currentTool = SquareBrush
+        , brushSize = brushSizeList
         }
+
+
+brushSizeList : SelectionList BrushSize
+brushSizeList =
+    SelectionList.fromList One [ Four, Eight, Sixteen, ThirtyTwo ]
 
 
 
@@ -93,44 +115,82 @@ update msg model =
             , Cmd.none
             )
 
+        ToggleDebug ->
+            ( { model | treeDebugOutline = not model.treeDebugOutline }
+            , Cmd.none
+            )
 
-insertHelper : (Tree.BoundingBox -> Bool) -> ( Position, a ) -> Tree a -> Tree a
-insertHelper depth ( pos, clr ) tree =
-    case tree of
-        Leaf l ->
-            if (depth l.boundingBox) && (pointInRegion pos l.boundingBox) then
-                if clr /= l.val then
-                    Leaf { l | val = clr }
-                else
-                    tree
-            else if not (pointInRegion pos l.boundingBox) then
-                tree
-            else
-                insertHelper depth ( pos, clr ) (Tree.subDivide tree)
+        NoOp ->
+            ( model, Cmd.none )
 
-        Node box ne nw se sw ->
-            if not (pointInRegion pos box) then
-                tree
-            else
-                (Node box (insertHelper depth ( pos, clr ) ne) (insertHelper depth ( pos, clr ) nw) (insertHelper depth ( pos, clr ) se) (insertHelper depth ( pos, clr ) sw))
+        ChooseTool t ->
+            ( { model | currentTool = t }, Cmd.none )
+
+        CycleBrushSize ->
+            ( { model | brushSize = SelectionList.cycleSelection model.brushSize }
+            , Cmd.none
+            )
 
 
 addTile : Model -> Position -> Tree Int
 addTile model point =
     let
         maxDepth =
-            maxTreeDepth model
+            maxTreeDepth model (brushSizeToInt model.brushSize.selected)
+
+        fCollision =
+            case model.currentTool of
+                SquareBrush ->
+                    pointInRegion
+
+                CircleBrush ->
+                    pointInRegion
     in
-        insertHelper (maxDepth) ( point, model.selectedClr ) model.canvas
+        insertHelper maxDepth fCollision ( point, model.selectedClr ) model.canvas
 
 
-maxTreeDepth : Model -> Tree.BoundingBox -> Bool
-maxTreeDepth model box =
+insertHelper : (Tree.BoundingBox -> Bool) -> (Position -> Tree.BoundingBox -> Bool) -> ( Position, a ) -> Tree a -> Tree a
+insertHelper depth fCollision ( pos, clr ) tree =
+    case tree of
+        Leaf l ->
+            let
+                collidesWithBrush =
+                    fCollision pos (Debug.log "Checking box: " l.boundingBox)
+            in
+                if (depth l.boundingBox) && (collidesWithBrush) then
+                    if clr /= l.val then
+                        Leaf { l | val = clr }
+                    else
+                        tree
+                else if not (collidesWithBrush) then
+                    tree
+                else
+                    insertHelper depth fCollision ( pos, clr ) (Tree.subDivide tree)
+
+        Node box ne nw se sw ->
+            if not (fCollision pos box) then
+                tree
+            else
+                (Node box
+                    (insertHelper depth fCollision ( pos, clr ) ne)
+                    (insertHelper depth fCollision ( pos, clr ) nw)
+                    (insertHelper depth fCollision ( pos, clr ) se)
+                    (insertHelper depth fCollision ( pos, clr ) sw)
+                )
+
+
+maxTreeDepth : Model -> Int -> Tree.BoundingBox -> Bool
+maxTreeDepth model brushSize box =
     let
-        ( tileWidth, tileHeight ) =
-            ( model.window.width // model.columns, model.window.height // model.rows )
+        tileSize =
+            getTileSize model
+
+        ( targetWidth, targetHeight ) =
+            ( (Tuple.first tileSize) * brushSize
+            , (Tuple.second tileSize) * brushSize
+            )
     in
-        box.size.width == tileWidth || box.size.height == tileHeight
+        box.size.width == targetWidth || box.size.height == targetHeight
 
 
 saveHistory : Array (Tree Int) -> Tree Int -> Array (Tree Int)
@@ -210,15 +270,17 @@ tileAtCursor pos model =
         rows =
             toFloat <| model.rows
 
-        width =
-            toFloat <| model.window.width
-
-        height =
-            toFloat <| model.window.height
+        ( width, height ) =
+            getTileSize model
     in
-        ( truncate <| (x / width) * columns
-        , truncate <| (y / height) * rows
+        ( truncate <| (x / toFloat width) * columns
+        , truncate <| (y / toFloat height) * rows
         )
+
+
+getTileSize : Model -> ( Int, Int )
+getTileSize model =
+    ( model.window.width // model.columns, model.window.height // model.rows )
 
 
 boxInRegion : Tree.BoundingBox -> Tree.BoundingBox -> Bool
@@ -235,14 +297,59 @@ boxInRegion newTile region =
 
 pointInRegion : Position -> Tree.BoundingBox -> Bool
 pointInRegion cursorPos region =
-    cursorPos.x
-        >= region.pos.x
-        && cursorPos.x
-        <= (region.pos.x + region.size.width)
-        && cursorPos.y
-        >= region.pos.y
-        && cursorPos.y
-        <= (region.pos.y + region.size.height)
+    Debug.log "x match: "
+        (cursorPos.x
+            >= region.pos.x
+            && cursorPos.x
+            <= (region.pos.x + region.size.width)
+        )
+        && Debug.log "y match: "
+            (cursorPos.y
+                >= region.pos.y
+                && cursorPos.y
+                <= (region.pos.y + region.size.height)
+            )
+
+
+intersectSquare : Model -> Position -> Tree.BoundingBox -> Bool
+intersectSquare model cursorPos boxToCheck =
+    let
+        ( tileWidth, tileHeight ) =
+            getTileSize model
+
+        brushSize =
+            brushSizeToInt model.brushSize.selected
+
+        ( xOffset, yOffset ) =
+            ( (brushSize // 2) * tileWidth, (brushSize // 2) * tileHeight )
+
+        ( boxWidth, boxHeight ) =
+            ( brushSize * tileWidth, brushSize * tileHeight )
+
+        brushBox =
+            Debug.log "brushbox: " (Tree.newBox (cursorPos.x - xOffset) (cursorPos.y - yOffset) boxWidth boxHeight)
+
+        brushCentre =
+            Tree.boxCentre brushBox
+
+        boxCentre =
+            Tree.boxCentre boxToCheck
+    in
+        Debug.log "checkresult: "
+            (abs (boxCentre.x - brushCentre.x)
+                * 2
+                < brushBox.size.width
+                + boxToCheck.size.width
+                && abs (boxCentre.y - brushCentre.y)
+                * 2
+                < brushBox.size.height
+                + boxToCheck.size.height
+            )
+
+
+debugKey : KeyCode
+debugKey =
+    Char.toCode '`'
 
 
 
@@ -254,7 +361,16 @@ subscriptions model =
     case model.drag of
         Nothing ->
             if not model.mouseOverUI then
-                Mouse.downs DragStart
+                Sub.batch
+                    [ Mouse.downs DragStart
+                    , Keyboard.presses
+                        (\p ->
+                            if p == debugKey then
+                                ToggleDebug
+                            else
+                                NoOp
+                        )
+                    ]
             else
                 Sub.none
 
