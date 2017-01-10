@@ -1,7 +1,7 @@
 module Types exposing (..)
 
 import Mouse exposing (Position)
-import Tree exposing (Tree)
+import Tree exposing (Tree, BoundingBox)
 import Array exposing (Array)
 import Window exposing (Size)
 import SelectionList exposing (SelectionList)
@@ -20,6 +20,7 @@ type alias Model =
     , treeDebugOutline : Bool
     , currentTool : Tool
     , brushSize : SelectionList BrushSize
+    , brushArea : Tree.BoundingBox
     }
 
 
@@ -41,6 +42,7 @@ type Msg
     | ToggleDebug
     | ChooseTool Tool
     | CycleBrushSize
+    | TrackMouse Position
     | NoOp
 
 
@@ -58,10 +60,10 @@ type Tool
 
 type BrushSize
     = One
+    | Two
     | Four
     | Eight
     | Sixteen
-    | ThirtyTwo
 
 
 brushSizeToInt : BrushSize -> Int
@@ -69,6 +71,9 @@ brushSizeToInt size =
     case size of
         One ->
             1
+
+        Two ->
+            2
 
         Four ->
             4
@@ -79,21 +84,14 @@ brushSizeToInt size =
         Sixteen ->
             16
 
-        ThirtyTwo ->
+
+
+{--ThirtyTwo ->
             32
-
-
-
-{- type alias SelectionList a =
-       { previous : List a
-       , selected : a
-       , next : List a
-       }
-
-
-   cycleSelection : SelectionList a -> SelectionList a
-   cycleSelection s =
-       { s
-       | previous = List.append s.previous s.selected
-       , selected = Maybe.withDefault
 -}
+
+
+type BoxCollision
+    = None
+    | InsideOrEqual
+    | Intersecting

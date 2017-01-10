@@ -13,11 +13,18 @@ import FontAwesome as FA
 import PicoPalette
 import List
 import SelectionList exposing (SelectionList)
+import ElmEscapeHtml as EscapeHtml
 
 
 buildUI : Model -> List (Model -> Html Msg) -> UIposition -> Html Msg
 buildUI model controls position =
     let
+        hideOnDrag =
+            if model.drag /= Nothing then
+                ( "visibility", "hidden" )
+            else
+                ( "visibility", "visible" )
+
         containerStandard =
             [ ( "display", "flex" )
             , ( "position", "fixed" )
@@ -31,6 +38,8 @@ buildUI model controls position =
             , ( "border", "0.1em solid white" )
             , ( "border-radius", "2em" )
             , ( "padding", "1ex" )
+            , hideOnDrag
+            , ( "cursor", "auto" )
             ]
 
         pickerStyle =
@@ -100,13 +109,36 @@ reverseMap fList arg =
         inner fList arg []
 
 
-iconBtn : (Color -> Int -> Html Msg) -> Bool -> Msg -> Model -> Html Msg
-iconBtn element isActive msg model =
-    span
-        [ Html.style [ ( "margin", ".5ex" ) ]
-        , Html.onClick msg
-        ]
-        [ element (btnColour isActive) 48 ]
+iconBtnGreyable : (Color -> Int -> Html Msg) -> Bool -> Msg -> Model -> Html Msg
+iconBtnGreyable element isActive msg model =
+    let
+        cursor =
+            if isActive then
+                ( "cursor", "pointer" )
+            else
+                ( "cursor", "not-allowed" )
+    in
+        span
+            [ Html.style [ ( "margin", ".5ex" ), cursor ]
+            , Html.onClick msg
+            ]
+            [ element (btnColour isActive) 48 ]
+
+
+iconBtnChangeable : (Color -> Int -> Html Msg) -> (Color -> Int -> Html Msg) -> Bool -> Msg -> Model -> Html Msg
+iconBtnChangeable default secondary switch msg model =
+    let
+        element =
+            if switch == True then
+                secondary
+            else
+                default
+    in
+        span
+            [ Html.style [ ( "margin", ".5ex" ), ( "cursor", "pointer" ) ]
+            , Html.onClick msg
+            ]
+            [ element Color.white 48 ]
 
 
 btnColour : Bool -> Color
@@ -141,18 +173,11 @@ colourSwatch swatchClr model =
                 , ( "border-color", "white" )
                 , border
                 , ( "margin", ".3em" )
+                , ( "cursor", "pointer" )
                 ]
             , Html.onClick (ColorSelection swatchClr)
             ]
             []
-
-
-squareBrush : Model -> Html Msg
-squareBrush model =
-    Svg.svg [ width "48", height "48" ]
-        [ Svg.rect [ width "32", height "32", stroke "white", fill "black" ]
-            []
-        ]
 
 
 brushSizePicker : Msg -> Model -> Html Msg
@@ -167,6 +192,9 @@ brushSizePicker msg model =
             , ( "align-items", "flex-end" )
             , ( "flex-wrap", "wrap" )
             , ( "padding-bottom", "1.5ex" )
+            , ( "margin-left", "auto" )
+            , ( "margin-right", "auto" )
+            , ( "cursor", "pointer" )
             ]
         , Html.onClick msg
         ]
@@ -180,9 +208,11 @@ brushSizePicker msg model =
                     , ( "font-size", "10pt" )
                     , ( "color", "white" )
                     , ( "display", "block" )
+                    , ( "text-align", "center" )
                     ]
                 ]
-                [ text <| (toString <| brushSizeToInt model.brushSize.selected) ++ " pix"
+                [ text <| (toString <| brushSizeToInt model.brushSize.selected)
+                , FA.times Color.white 12
                 ]
             ]
         , div [] <| selectionDisplay model.brushSize

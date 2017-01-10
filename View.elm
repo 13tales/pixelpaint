@@ -34,6 +34,12 @@ view model =
                 True
             else
                 False
+
+        brushEffect =
+            if (model.brushSize.selected == One || model.drag /= Nothing || model.mouseOverUI) then
+                Debug.log "no brush effect" (div [] [])
+            else
+                Debug.log "Yay, brush effect" (renderCursor model.brushArea)
     in
         Html.div
             []
@@ -42,15 +48,20 @@ view model =
                 , height "1280"
                 , viewBox "0 0 1280 1280"
                 , Html.onMouseEnter LeaveUI
+                , cursor "crosshair"
                 ]
-                [ renderTree model.treeDebugOutline model.canvas ]
+                [ renderTree model.treeDebugOutline model.canvas
+                , brushEffect
+                ]
             , panel PickerUI.swatches Bottom
             , panel
-                [ PickerUI.iconBtn FA.square (isActiveTool SquareBrush) (ChooseTool SquareBrush)
-                , PickerUI.iconBtn FA.circle (isActiveTool CircleBrush) (ChooseTool CircleBrush)
-                , PickerUI.brushSizePicker CycleBrushSize
-                , PickerUI.iconBtn FA.step_backward canUndo Undo
-                , PickerUI.iconBtn FA.step_forward canRedo Redo
+                [ {- PickerUI.iconBtnChangeable FA.square_o FA.square (isActiveTool SquareBrush) (ChooseTool SquareBrush)
+                     , PickerUI.iconBtnChangeable FA.circle_o FA.circle (isActiveTool CircleBrush) (ChooseTool CircleBrush)
+                     ,
+                  -}
+                  PickerUI.brushSizePicker CycleBrushSize
+                , PickerUI.iconBtnGreyable FA.step_backward canUndo Undo
+                , PickerUI.iconBtnGreyable FA.step_forward canRedo Redo
                 ]
                 Left
             ]
@@ -65,6 +76,19 @@ renderTree debug t =
         Tree.Node b ne nw se sw ->
             Svg.lazy (Svg.g [])
                 (List.map (renderTree debug) [ ne, nw, se, sw ])
+
+
+renderCursor : Tree.BoundingBox -> Svg Msg
+renderCursor box =
+    Svg.rect
+        [ x (toString box.pos.x)
+        , y (toString box.pos.y)
+        , width (toString box.size.width)
+        , height (toString box.size.height)
+        , stroke "white"
+        , fill "none"
+        ]
+        []
 
 
 renderLeaf : Bool -> Tree.Bounded Int -> Svg Msg

@@ -121,3 +121,13 @@ cullTree t =
 equalFour : a -> a -> a -> a -> Bool
 equalFour a b c d =
     a == b && b == c && c == d
+
+
+getBox : Tree a -> BoundingBox
+getBox t =
+    case t of
+        Leaf l ->
+            l.boundingBox
+
+        Node b _ _ _ _ ->
+            b
