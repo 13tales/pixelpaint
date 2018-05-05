@@ -1,0 +1,25 @@
+{
+  "name": "pixelpaint",
+  "version": "1.0.0",
+  "main": "index.html",
+  "repository": "git@github.com:13tales/pixelpaint.git",
+  "author": "Tom Armstrong <thomas.armstrong@forticode.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "webpack -p",
+    "start": "webpack-dev-server --port 3000"
+  },
+  "devDependencies": {
+    "webpack": "^4.7.0",
+    "webpack-cli": "^2.1.2",
+    "webpack-dev-server": "^3.1.4"
+  },
+  "dependencies": {
+    "css-loader": "^0.28.11",
+    "elm-webpack-loader": "^4.5.0",
+    "file-loader": "^1.1.11",
+    "style-loader": "^0.21.0",
+    "url-loader": "^1.0.1"
+  }
+}

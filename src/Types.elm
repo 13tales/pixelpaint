@@ -42,7 +42,7 @@ type Msg
     | ToggleDebug
     | ChooseTool Tool
     | CycleBrushSize
-    | TrackMouse Position
+--    | TrackMouse Position
     | NoOp
 
 
